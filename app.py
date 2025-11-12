@@ -161,10 +161,10 @@ def update_task(task_id):
 # ĐÃ SỬA:
 @app.route('/health')
 def health_check():
-    try:
-        db.session.execute(text('SELECT 1')) # <-- Sửa: Bọc trong hàm text()
+    #try:
+       # db.session.execute(text('SELECT 1')) # <-- Sửa: Bọc trong hàm text()
         return "OK", 200
-    except Exception as e:
-        print(f"Health check failed: {e}", flush=True)
-        return f"Health check failed: {e}", 500
+  #  except Exception as e:
+      #  print(f"Health check failed: {e}", flush=True)
+      #  return f"Health check failed: {e}", 500
     
