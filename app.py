@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Task  # Import thêm Task
 import os
 import socket
+from sqlalchemy import text # <-- THÊM DÒNG NÀY
 
 app = Flask(__name__)
 
@@ -133,8 +134,7 @@ def create_task():
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 @login_required
 def update_task(task_id):
-    # Sửa: Tìm task trong DB
-    task = Task.query.get(task_id)
+    task = db.session.get(Task, task_id) # <-- Sửa: Dùng db.session.get
     
     # Kiểm tra task có tồn tại và thuộc về user này không
     if not task:
@@ -158,13 +158,13 @@ def update_task(task_id):
     return jsonify(task.to_dict()), 200
 
 # --- HEALTH CHECK CHO LOAD BALANCER ---
+# ĐÃ SỬA:
 @app.route('/health')
 def health_check():
-    # Route này để Load Balancer kiểm tra xem ứng dụng còn "sống" không
     try:
-        # Thử truy vấn DB đơn giản
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1')) # <-- Sửa: Bọc trong hàm text()
         return "OK", 200
     except Exception as e:
-        print(f"Health check failed: {e}")
-        return "Application is unhealthy (DB connection failed)", 500
+        print(f"Health check failed: {e}", flush=True)
+        return f"Health check failed: {e}", 500
+    
