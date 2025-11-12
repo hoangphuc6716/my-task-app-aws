@@ -16,4 +16,5 @@ EXPOSE 8080
 
 # Sửa: Dùng wsgi:app để chạy file wsgi.py (tốt hơn cho production)
 # SỬA LẠI THÀNH:
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "wsgi:app", "--log-level", "debug"]
+# SỬA LẠI THÀNH:
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app", "--log-level", "debug"]
