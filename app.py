@@ -36,11 +36,11 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.before_first_request
-def create_tables():
+#@app.before_first_request
+#def create_tables():
     # Hàm này sẽ tự động tạo các bảng khi chạy lần đầu
     # Rất hữu ích cho việc khởi tạo database trên AWS
-    db.create_all()
+   # db.create_all()
 
 def get_system_info():
     try:
