@@ -83,7 +83,7 @@ jobs:
           # (ĐÃ SỬA: Bỏ volume -v vì đã dùng RDS)
           docker run -d \
             --name task-tracker \
-            -p 8080:8080 \
+            -p 80:8080 \
             -e SECRET_KEY="${FLASK_SECRET_KEY}" \
             -e DATABASE_URI="${DATABASE_URI}" \
             -e FLASK_ENV=production \
