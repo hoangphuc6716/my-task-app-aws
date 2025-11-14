@@ -1,13 +1,35 @@
-# Python
-*.py[cod]
+# --- Python ---
+*.pyc
 __pycache__/
 .pytest_cache/
-*.db
-*.sqlite3
 
 # Môi trường ảo
 venv/
 .env
 
-# AWS/EB
+# Database local
+*.db
+*.sqlite3
+
+# --- Terraform (Rất quan trọng) ---
+# Bỏ qua thư mục plugin (rất NẶNG)
+*/.terraform/
+
+# Bỏ qua file trạng thái (chứa THÔNG TIN NHẠY CẢM)
+*/terraform.tfstate
+*/terraform.tfstate.backup
+
+# Bỏ qua file kế hoạch (có thể chứa thông tin nhạy cảm)
+*/tfplan
+
+# Bỏ qua file biến (chứa MẬT KHẨU)
+*/terraform.tfvars
+
+# Bỏ qua file lock
+*/.terraform.lock.hcl
+
+# --- AWS/EB ---
 .elasticbeanstalk/
+
+# --- File hệ thống ---
+.DS_Store
