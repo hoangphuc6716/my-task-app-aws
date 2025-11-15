@@ -72,6 +72,15 @@ jobs:
         echo "Pushing $ECR_REPOSITORY_URI:latest"
         docker push $ECR_REPOSITORY_URI:latest
 
+    - name: Cancel any ongoing refresh
+      # Thêm bước này để đảm bảo không bị kẹt
+      run: |
+        aws autoscaling cancel-instance-refresh \
+          --auto-scaling-group-name $ASG_NAME \
+          --region $AWS_REGION
+      # Bỏ qua lỗi nếu không có gì để cancel
+      continue-on-error: true 
+
     - name: Trigger Auto Scaling Group instance refresh
       # Đây là câu lệnh "ra lệnh" cho ASG làm mới
       run: |

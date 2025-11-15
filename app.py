@@ -6,9 +6,6 @@ import os
 import socket
 from sqlalchemy import text # <-- THÊM DÒNG NÀY
 
-import hashlib # <-- THÊM DÒNG NÀY
-import os #
-
 app = Flask(__name__)
 
 # --- CẤU HÌNH MỚI ---
@@ -159,28 +156,6 @@ def update_task(task_id):
         
     db.session.commit()
     return jsonify(task.to_dict()), 200
-
-
-
-@app.route('/stress')
-def stress_test():
-    """
-    Đây là một endpoint "nặng" cố tình được tạo ra
-    để làm nóng CPU cho mục đích demo CloudWatch & Auto Scaling.
-    Nó sẽ hash một chuỗi 150,000 lần.
-    """
-    try:
-        random_string = os.urandom(16)
-        
-        # Giữ nguyên 150,000 vì Dockerfile đã tăng timeout
-        for i in range(150000): 
-            hashlib.sha256(random_string + str(i).encode()).hexdigest()
-            
-        return "Stress test complete! CPU was busy.", 200
-    except Exception as e:
-        return f"Stress test failed: {e}", 500
-
-
 
 # --- HEALTH CHECK CHO LOAD BALANCER ---
 # ĐÃ SỬA:
