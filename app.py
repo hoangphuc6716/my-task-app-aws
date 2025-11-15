@@ -165,12 +165,16 @@ def update_task(task_id):
 
 @app.route('/stress')
 def stress_test():
-    
+    """
+    Đây là một endpoint "nặng" cố tình được tạo ra
+    để làm nóng CPU cho mục đích demo CloudWatch & Auto Scaling.
+    Nó sẽ hash một chuỗi 150,000 lần.
+    """
     try:
         random_string = os.urandom(16)
         
-        # Đây là tác vụ "nặng" (CPU-Bound)
-        for i in range(500000): # Lặp 500,000 lần
+        # SỬA Ở ĐÂY: Giảm từ 500000 xuống 150000
+        for i in range(150000): # Lặp 150,000 lần
             hashlib.sha256(random_string + str(i).encode()).hexdigest()
             
         return "Stress test complete! CPU was busy.", 200
