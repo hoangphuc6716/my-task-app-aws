@@ -162,7 +162,6 @@ def update_task(task_id):
 
 
 
-
 @app.route('/stress')
 def stress_test():
     """
@@ -173,14 +172,13 @@ def stress_test():
     try:
         random_string = os.urandom(16)
         
-        # SỬA Ở ĐÂY: Giảm từ 500000 xuống 150000
-        for i in range(150000): # Lặp 150,000 lần
+        # Giữ nguyên 150,000 vì Dockerfile đã tăng timeout
+        for i in range(150000): 
             hashlib.sha256(random_string + str(i).encode()).hexdigest()
             
         return "Stress test complete! CPU was busy.", 200
     except Exception as e:
         return f"Stress test failed: {e}", 500
-
 
 
 
