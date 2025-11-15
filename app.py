@@ -6,6 +6,9 @@ import os
 import socket
 from sqlalchemy import text # <-- THÊM DÒNG NÀY
 
+import hashlib # <-- THÊM DÒNG NÀY
+import os #
+
 app = Flask(__name__)
 
 # --- CẤU HÌNH MỚI ---
@@ -156,6 +159,26 @@ def update_task(task_id):
         
     db.session.commit()
     return jsonify(task.to_dict()), 200
+
+
+
+
+@app.route('/stress')
+def stress_test():
+    
+    try:
+        random_string = os.urandom(16)
+        
+        # Đây là tác vụ "nặng" (CPU-Bound)
+        for i in range(500000): # Lặp 500,000 lần
+            hashlib.sha256(random_string + str(i).encode()).hexdigest()
+            
+        return "Stress test complete! CPU was busy.", 200
+    except Exception as e:
+        return f"Stress test failed: {e}", 500
+
+
+
 
 # --- HEALTH CHECK CHO LOAD BALANCER ---
 # ĐÃ SỬA:
