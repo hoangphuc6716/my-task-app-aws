@@ -72,10 +72,12 @@ jobs:
         echo "Pushing $ECR_REPOSITORY_URI:latest"
         docker push $ECR_REPOSITORY_URI:latest
 
-    - name: Trigger Auto Scaling Group instance refresh
-      # Đây là câu lệnh "ra lệnh" cho ASG làm mới
+    # THÊM MỚI: Bước quan trọng để deploy code mới
+    - name: Start ASG Instance Refresh
       run: |
+        echo "Starting instance refresh for ASG: ${{ env.ASG_NAME }}"
+        # Ra lệnh cho ASG bắt đầu quá trình "rolling update"
+        # để thay thế các instance cũ bằng instance mới
         aws autoscaling start-instance-refresh \
-          --auto-scaling-group-name $ASG_NAME \
-          --region $AWS_REGION
-        echo "Instance refresh triggered for $ASG_NAME"
+          --auto-scaling-group-name ${{ env.ASG_NAME }} \
+          --strategy Desired
