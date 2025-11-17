@@ -1,3 +1,5 @@
+# File: load_balancer.tf
+
 resource "aws_lb" "alb" {
   name               = "prod-task-tracker-lb"
   internal           = false
@@ -17,7 +19,7 @@ resource "aws_lb_target_group" "tg" {
   vpc_id   = data.aws_vpc.default.id
 
   health_check {
-    path                = "/health"
+    path                = "/health" # Đảm bảo app của bạn có endpoint này, hoặc đổi thành "/"
     protocol            = "HTTP"
     port                = "traffic-port"
     healthy_threshold   = 2
@@ -28,12 +30,7 @@ resource "aws_lb_target_group" "tg" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "attachment" {
-  target_group_arn = aws_lb_target_group.tg.arn
-  # SỬA LỖI TẠI ĐÂY:
-  target_id        = aws_instance.app_server.id
-  port             = 80
-}
+# ĐÃ XÓA RESOURCE: aws_lb_target_group_attachment (ASG sẽ tự động attach)
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.alb.arn
