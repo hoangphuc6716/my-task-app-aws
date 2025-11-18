@@ -1,5 +1,6 @@
 # Tên file: .github/workflows/deploy.yml
-# auto scaling
+# THAY THẾ TOÀN BỘ NỘI DUNG BẰNG CODE NÀY:
+#terraform
 name: CI/CD Pipeline
 
 on:
@@ -9,75 +10,89 @@ on:
     branches: [ main ]
 
 env:
-  # Đặt biến môi trường từ GitHub Secrets
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
-  ASG_NAME: ${{ secrets.ASG_NAME }}
+  AWS_REGION: us-east-1 # Hoặc region của bạn
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v2
       with:
         python-version: '3.9'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+
     - name: Run tests
       run: |
         pytest test_app.py -v
 
   deploy:
-    # Job này chỉ chạy khi job 'test' thành công
     needs: test
     runs-on: ubuntu-latest
-    # Và chỉ chạy khi push lên nhánh 'main'
     if: github.ref == 'refs/heads/main'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
-      # Cấu hình "chìa khoá" AWS đã lưu trong Secrets
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    - name: Login to Amazon ECR
-      # Đăng nhập vào ECR
-      uses: aws-actions/amazon-ecr-login@v2
-      id: login-ecr
-
-    - name: Build, tag, and push image to Amazon ECR
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      # Thêm các biến môi trường từ GitHub Secrets
       env:
-        # Lấy mã SHA của commit để làm tag cho image (giúp phân biệt phiên bản)
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Build image từ Dockerfile
-        docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
-        
-        # Gắn thêm tag 'latest' cho image vừa build
-        docker tag $ECR_REPOSITORY_URI:$IMAGE_TAG $ECR_REPOSITORY_URI:latest
-        
-        echo "Pushing $ECR_REPOSITORY_URI:$IMAGE_TAG"
-        docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
-        
-        echo "Pushing $ECR_REPOSITORY_URI:latest"
-        docker push $ECR_REPOSITORY_URI:latest
+        FLASK_SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
+        DATABASE_URI: ${{ secrets.DATABASE_URI }}
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        envs: FLASK_SECRET_KEY, DATABASE_URI # Truyền các biến này vào script
+        script: |
+          echo "Deploying at $(date -u '+%Y-%m-%d %H:%M:%S')"
 
-    # THÊM MỚI: Bước quan trọng để deploy code mới
-    - name: Start ASG Instance Refresh
-      run: |
-        echo "Starting instance refresh for ASG: ${{ env.ASG_NAME }}"
-        # Ra lệnh cho ASG bắt đầu quá trình "rolling update"
-        # để thay thế các instance cũ bằng instance mới
-        aws autoscaling start-instance-refresh \
-          --auto-scaling-group-name ${{ env.ASG_NAME }} \
-          --strategy Rolling
+          # Cài đặt git và docker nếu chưa có
+          sudo yum update -y
+          sudo yum install -y git
+          sudo yum install -y docker
+
+          # Khởi động Docker và cấp quyền cho user
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo usermod -aG docker ${{ secrets.EC2_USERNAME }}
+
+          # === ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG NHẤT ===
+          # Clone hoặc pull ĐÚNG REPO CỦA BẠN
+          cd ~/my-task-app-aws || git clone https://github.com/hoangphuc6716/my-task-app-aws.git ~/my-task-app-aws
+          cd ~/my-task-app-aws
+          git fetch
+          git reset --hard origin/main
+          # ============================================
+
+          # Stop và remove container cũ
+          docker stop task-tracker || true
+          docker rm task-tracker || true
+
+          # Build image mới (Bây giờ nó sẽ build ĐÚNG code)
+          docker build -t task-tracker .
+
+          # Run container mới với các biến môi trường
+          # (ĐÃ SỬA: Bỏ volume -v vì đã dùng RDS)
+          docker run -d \
+            --name task-tracker \
+            -p 80:8080 \
+            -e SECRET_KEY="${FLASK_SECRET_KEY}" \
+            -e DATABASE_URI="${DATABASE_URI}" \
+            -e FLASK_ENV=production \
+            -e PYTHONUNBUFFERED=1 \
+            --restart unless-stopped \
+            task-tracker
+
+          echo "Deployment completed at $(date -u '+%Y-%m-%d %H:%M:%S')"
+
+
+
+
